@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#c2847a">
+<title>かんたん青色申告サポート｜業務委託美容師さん向け</title>
+<style>
+  :root{
+    --bg:#fbf7f4;
+    --card:#ffffff;
+    --line:#efe6e1;
+    --primary:#c2847a;
+    --primary-dark:#a86b62;
+    --primary-soft:#f6e9e5;
+    --income:#5b9e8f;
+    --income-soft:#e3f1ee;
+    --expense:#c2847a;
+    --text:#3a3330;
+    --muted:#9b8f89;
+    --danger:#c4564b;
+    --shadow:0 2px 10px rgba(120,90,80,.08);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+    font-size:16px;
+    padding-bottom:84px;
+  }
+  .app{max-width:480px;margin:0 auto;min-height:100vh;}
+
+  /* ヘッダー */
+  header{
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    color:#fff;padding:16px 18px;
+    position:sticky;top:0;z-index:20;
+    box-shadow:0 2px 8px rgba(168,107,98,.25);
+  }
+  header .title{font-size:18px;font-weight:700;letter-spacing:.02em;}
+  header .sub{font-size:12px;opacity:.92;margin-top:2px;}
+  .year-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+  .year-row label{font-size:13px;opacity:.95;}
+  .year-row select{
+    font-size:15px;padding:6px 10px;border-radius:10px;border:none;
+    background:rgba(255,255,255,.95);color:var(--text);font-weight:700;
+  }
+
+  main{padding:16px 16px 8px;}
+  section.view{display:none;}
+  section.view.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  h2.page-title{font-size:20px;margin:4px 0 14px;font-weight:700;}
+  .lead{font-size:14px;color:var(--muted);margin:-6px 0 16px;}
+
+  /* カード */
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:16px;box-shadow:var(--shadow);margin-bottom:14px;
+  }
+
+  /* ホームの集計 */
+  .summary-hero{background:var(--card);border-radius:18px;padding:18px;box-shadow:var(--shadow);border:1px solid var(--line);margin-bottom:16px;}
+  .summary-hero .net{text-align:center;margin-bottom:6px;}
+  .summary-hero .net .label{font-size:13px;color:var(--muted);}
+  .summary-hero .net .val{font-size:34px;font-weight:800;color:var(--text);letter-spacing:-.01em;}
+  .summary-hero .net .note{font-size:11px;color:var(--muted);}
+  .ie-row{display:flex;gap:10px;margin-top:14px;}
+  .ie-box{flex:1;border-radius:14px;padding:12px;text-align:center;}
+  .ie-box.income{background:var(--income-soft);}
+  .ie-box.expense{background:var(--primary-soft);}
+  .ie-box .l{font-size:12px;color:var(--muted);}
+  .ie-box .v{font-size:20px;font-weight:800;margin-top:2px;}
+  .ie-box.income .v{color:var(--income);}
+  .ie-box.expense .v{color:var(--expense);}
+
+  /* 3ステップ大ボタン */
+  .steps{display:flex;flex-direction:column;gap:12px;}
+  .step-btn{
+    display:flex;align-items:center;gap:14px;width:100%;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:18px 16px;text-align:left;cursor:pointer;box-shadow:var(--shadow);
+    transition:transform .08s;
+  }
+  .step-btn:active{transform:scale(.98);}
+  .step-btn .ico{
+    width:52px;height:52px;border-radius:14px;flex:none;
+    display:flex;align-items:center;justify-content:center;font-size:26px;
+  }
+  .step-btn.s1 .ico{background:var(--income-soft);}
+  .step-btn.s2 .ico{background:var(--primary-soft);}
+  .step-btn.s3 .ico{background:#eef0f5;}
+  .step-btn .tx .n{font-size:12px;color:var(--muted);font-weight:700;}
+  .step-btn .tx .t{font-size:17px;font-weight:700;}
+  .step-btn .tx .d{font-size:12px;color:var(--muted);}
+  .step-btn .arr{margin-left:auto;color:var(--muted);font-size:20px;}
+
+  /* フォーム */
+  label.field{display:block;margin-bottom:14px;}
+  label.field .lab{display:block;font-size:14px;font-weight:700;margin-bottom:6px;}
+  label.field .hint{font-size:12px;color:var(--muted);font-weight:400;margin-left:4px;}
+  input[type=text],input[type=number],input[type=date],select,textarea{
+    width:100%;font-size:16px;padding:13px 14px;border:1.5px solid var(--line);
+    border-radius:12px;background:#fff;color:var(--text);font-family:inherit;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);}
+  textarea{resize:vertical;min-height:64px;}
+  .req{color:var(--danger);font-size:12px;margin-left:4px;}
+
+  .amount-input{position:relative;}
+  .amount-input input{padding-left:30px;font-size:22px;font-weight:700;}
+  .amount-input .yen{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--muted);font-weight:700;}
+
+  /* ボタン */
+  .btn{
+    display:block;width:100%;font-size:17px;font-weight:700;
+    padding:16px;border-radius:14px;border:none;cursor:pointer;
+    font-family:inherit;transition:transform .08s,opacity .2s;
+  }
+  .btn:active{transform:scale(.985);}
+  .btn-primary{background:var(--primary);color:#fff;}
+  .btn-income{background:var(--income);color:#fff;}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--text);}
+  .btn-danger{background:#fff;border:1.5px solid var(--danger);color:var(--danger);}
+  .btn-sm{font-size:14px;padding:10px;}
+
+  /* カテゴリ選択 */
+  .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .cat-chip{
+    border:1.5px solid var(--line);border-radius:14px;padding:12px 10px;
+    background:#fff;cursor:pointer;text-align:center;transition:.12s;
+  }
+  .cat-chip .emo{font-size:24px;}
+  .cat-chip .nm{font-size:13px;font-weight:700;margin-top:3px;line-height:1.3;}
+  .cat-chip.sel{border-color:var(--primary);background:var(--primary-soft);}
+  .cat-help{font-size:12px;color:var(--muted);background:var(--primary-soft);border-radius:10px;padding:10px 12px;margin:12px 0;display:none;}
+  .cat-help.show{display:block;}
+
+  /* 写真 */
+  /* レシート読み取り（OCR） */
+  .ocr-zone{margin-bottom:14px;}
+  .photo-btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:16px;border:1.5px dashed var(--primary);
+    border-radius:14px;background:var(--primary-soft);color:var(--primary-dark);
+    font-size:16px;font-weight:700;cursor:pointer;
+  }
+  .photo-btn.busy{opacity:.6;pointer-events:none;}
+  .ocr-hint{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .ocr-status{font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;display:none;background:#fff8f0;border:1px solid #f0dcc4;border-radius:10px;padding:10px 12px;}
+  .ocr-status.show{display:block;}
+  .ocr-status .ok{color:var(--income);font-weight:800;}
+  .ocr-status .preview{margin-top:8px;}
+  .ocr-status .preview img{max-width:120px;border-radius:8px;border:1px solid var(--line);display:block;}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--primary-soft);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* 一覧 */
+  .list-head{display:flex;align-items:center;justify-content:space-between;margin:18px 0 8px;}
+  .list-head h3{font-size:16px;margin:0;}
+  .month-tot{font-size:13px;color:var(--muted);}
+  .tx-item{
+    display:flex;align-items:center;gap:12px;background:var(--card);
+    border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;
+  }
+  .tx-item .thumb{width:46px;height:46px;border-radius:10px;flex:none;background:var(--primary-soft);display:flex;align-items:center;justify-content:center;font-size:22px;overflow:hidden;}
+  .tx-item .thumb img{width:100%;height:100%;object-fit:cover;}
+  .tx-item .info{flex:1;min-width:0;}
+  .tx-item .info .top{font-size:15px;font-weight:700;}
+  .tx-item .info .bot{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .tx-item .amt{font-weight:800;font-size:16px;white-space:nowrap;}
+  .tx-item .amt.income{color:var(--income);}
+  .tx-item .amt.expense{color:var(--expense);}
+  .tx-actions{display:flex;gap:6px;margin-left:6px;}
+  .tx-actions button{border:none;background:none;font-size:18px;cursor:pointer;padding:4px;color:var(--muted);}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px;font-size:14px;}
+
+  /* サマリー表 */
+  .sum-table{width:100%;border-collapse:collapse;}
+  .sum-table td{padding:11px 6px;border-bottom:1px solid var(--line);font-size:15px;}
+  .sum-table td.r{text-align:right;font-weight:700;white-space:nowrap;}
+  .sum-table tr.total td{font-weight:800;border-top:2px solid var(--line);border-bottom:none;font-size:16px;}
+  .sum-table tr.net td{font-size:18px;font-weight:800;color:var(--primary-dark);}
+  .sum-big{text-align:center;padding:16px;background:var(--primary-soft);border-radius:14px;margin-bottom:14px;}
+  .sum-big .l{font-size:13px;color:var(--muted);}
+  .sum-big .v{font-size:30px;font-weight:800;}
+
+  /* 注意書き */
+  .notice{background:#fff8f0;border:1px solid #f0dcc4;border-radius:14px;padding:14px;font-size:12.5px;color:#7a6a55;line-height:1.7;}
+  .notice b{color:#9a7a50;}
+  .notice ul{margin:8px 0 0;padding-left:18px;}
+  .notice li{margin-bottom:5px;}
+  .warn-inline{background:#fff8f0;border:1px solid #f0dcc4;border-radius:12px;padding:12px;font-size:12.5px;color:#7a6a55;margin-bottom:14px;}
+
+  details.help-box{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;box-shadow:var(--shadow);}
+  details.help-box summary{padding:14px 16px;font-weight:700;cursor:pointer;font-size:15px;list-style:none;}
+  details.help-box summary::-webkit-details-marker{display:none;}
+  details.help-box summary::after{content:"＋";float:right;color:var(--muted);}
+  details.help-box[open] summary::after{content:"－";}
+  details.help-box .body{padding:0 16px 16px;}
+
+  /* ボトムナビ */
+  .bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;z-index:30;
+    background:rgba(255,255,255,.97);border-top:1px solid var(--line);
+    display:flex;max-width:480px;margin:0 auto;
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+    backdrop-filter:blur(8px);
+  }
+  .nav-btn{flex:1;background:none;border:none;cursor:pointer;padding:6px 2px;color:var(--muted);font-family:inherit;}
+  .nav-btn .ico{font-size:21px;display:block;}
+  .nav-btn .lbl{font-size:10px;font-weight:700;}
+  .nav-btn.active{color:var(--primary);}
+
+  /* トースト */
+  .toast{
+    position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--text);color:#fff;padding:12px 22px;border-radius:30px;
+    font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:.3s;z-index:50;
+    box-shadow:0 4px 16px rgba(0,0,0,.2);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* 画像拡大 */
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">かんたん青色申告サポート</div>
+    <div class="sub">業務委託の美容師さんのための 記録＆集計アプリ</div>
+    <div class="year-row">
+      <label for="yearSelect">対象の年：</label>
+      <select id="yearSelect"></select>
+    </div>
+  </header>
+
+  <main>
+    <!-- ホーム -->
+    <section class="view active" id="view-home">
+      <div class="summary-hero">
+        <div class="net">
+          <div class="label">差引（おおよその所得）</div>
+          <div class="val" id="home-net">¥0</div>
+          <div class="note">＝ 収入合計 − 経費合計（あくまで目安です）</div>
+        </div>
+        <div class="ie-row">
+          <div class="ie-box income"><div class="l">収入合計</div><div class="v" id="home-income">¥0</div></div>
+          <div class="ie-box expense"><div class="l">経費合計</div><div class="v" id="home-expense">¥0</div></div>
+        </div>
+      </div>
+
+      <div class="steps">
+        <button class="step-btn s1" onclick="showView('income')">
+          <div class="ico">💰</div>
+          <div class="tx"><div class="n">STEP 1</div><div class="t">収入を記録</div><div class="d">お給料・報酬が入ったら</div></div>
+          <div class="arr">›</div>
+        </button>
+        <button class="step-btn s2" onclick="showView('expense')">
+          <div class="ico">🧾</div>
+          <div class="tx"><div class="n">STEP 2</div><div class="t">経費を記録</div><div class="d">材料・交通費など。レシートを撮るだけ</div></div>
+          <div class="arr">›</div>
+        </button>
+        <button class="step-btn s3" onclick="showView('export')">
+          <div class="ico">📤</div>
+          <div class="tx"><div class="n">STEP 3</div><div class="t">年末に書き出し</div><div class="d">確定申告用にCSVで保存</div></div>
+          <div class="arr">›</div>
+        </button>
+      </div>
+
+      <details class="help-box" style="margin-top:16px;">
+        <summary>はじめに・大切なお知らせ（必ずお読みください）</summary>
+        <div class="body">
+          <div class="notice">
+            <ul>
+              <li>このアプリは「記録と集計」をお手伝いするもので、<b>確定申告書そのものは作りません</b>。</li>
+              <li>税額・控除の最終判断は、<b>税理士・税務署・国税庁e-Tax</b>で確認してください。</li>
+              <li>青色申告には、事前の<b>「青色申告承認申請書」の提出</b>が必要です（未提出だと白色申告になります）。</li>
+              <li>データは<b>あなたの端末の中だけ</b>に保存され、外部には一切送信されません。</li>
+              <li>レシートの読み取り（OCR）も<b>端末の中だけ</b>で行い、撮った画像は保存も送信もしません。読み取った金額は<b>目安なので必ず確認</b>を。（初回だけ読み取り機能の準備にネット接続が必要です）</li>
+              <li>端末の変更やブラウザのデータ削除で記録は消えます。<b>こまめにCSV書き出し</b>をおすすめします。</li>
+            </ul>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- 収入 -->
+    <section class="view" id="view-income">
+      <h2 class="page-title">💰 収入を記録</h2>
+      <p class="lead">入れるのは「いつ・いくら」だけでOK。お店の名前や源泉徴収額は分かる範囲で。</p>
+
+      <div class="card">
+        <label class="field">
+          <span class="lab">金額<span class="req">必須</span></span>
+          <div class="amount-input"><span class="yen">¥</span><input type="number" id="inc-amount" inputmode="numeric" placeholder="0" min="0"></div>
+        </label>
+        <label class="field">
+          <span class="lab">日付</span>
+          <input type="date" id="inc-date">
+        </label>
+        <label class="field">
+          <span class="lab">お店の名前<span class="hint">（任意）</span></span>
+          <input type="text" id="inc-store" placeholder="例）〇〇サロン">
+        </label>
+        <label class="field">
+          <span class="lab">源泉徴収額<span class="hint">（なければ0）</span></span>
+          <div class="amount-input"><span class="yen">¥</span><input type="number" id="inc-withholding" inputmode="numeric" placeholder="0" min="0"></div>
+          <span class="hint" style="display:block;margin-top:6px;line-height:1.5;">💡 報酬から先に引かれている税金です。明細に「源泉徴収」と書いてあればその額を。分からなければ 0 のままでOK。</span>
+        </label>
+        <button class="btn btn-income" id="inc-submit" onclick="submitIncome()">この収入を記録する</button>
+      </div>
+
+      <div class="list-head">
+        <h3>記録した収入</h3>
+        <span class="month-tot" id="inc-yeartot"></span>
+      </div>
+      <div id="inc-list"></div>
+    </section>
+
+    <!-- 経費 -->
+    <section class="view" id="view-expense">
+      <h2 class="page-title">🧾 経費を記録</h2>
+      <p class="lead">仕事のために使ったお金を記録します。まず種類を選んでください。</p>
+      <div class="warn-inline">💡 スマホ・ネット代、家賃、光熱費など「プライベートと共用のもの」は、こちらではなく <b>「自宅ぶん」</b>で割合計算して登録してください。</div>
+
+      <div class="card">
+        <div class="cat-grid" id="cat-grid"></div>
+        <div class="cat-help" id="cat-help"></div>
+
+        <div class="ocr-zone">
+          <label class="photo-btn" id="ocr-btn">
+            <span id="ocr-btn-label">📷 レシートを撮って金額を読み取る</span>
+            <input type="file" id="exp-photo" accept="image/*" capture="environment" style="display:none;" onchange="handleReceiptOCR(event)">
+          </label>
+          <div class="ocr-hint">端末の中だけで読み取り、<b>画像は保存・送信しません</b>。読み取った金額は必ずご確認ください。（初回だけ読み取り機能の準備にネット接続が必要です）</div>
+          <div class="ocr-status" id="ocr-status"></div>
+        </div>
+
+        <label class="field">
+          <span class="lab">金額<span class="req">必須</span></span>
+          <div class="amount-input"><span class="yen">¥</span><input type="number" id="exp-amount" inputmode="numeric" placeholder="0" min="0"></div>
+        </label>
+        <label class="field">
+          <span class="lab">日付</span>
+          <input type="date" id="exp-date">
+        </label>
+        <label class="field">
+          <span class="lab">内容メモ<span class="hint">（任意）</span></span>
+          <input type="text" id="exp-memo" placeholder="例）カラー剤 まとめ買い">
+        </label>
+        <button class="btn btn-primary" id="exp-submit" onclick="submitExpense()">この経費を記録する</button>
+      </div>
+
+      <div class="list-head">
+        <h3>記録した経費</h3>
+        <span class="month-tot" id="exp-yeartot"></span>
+      </div>
+      <div id="exp-list"></div>
+    </section>
+
+    <!-- 家事按分 -->
+    <section class="view" id="view-prorate">
+      <h2 class="page-title">🏠 自宅ぶんの計算</h2>
+      <p class="lead">家賃やスマホ代など「仕事とプライベート両方で使うもの」は、仕事で使う割合だけを経費にできます。</p>
+
+      <div class="card">
+        <label class="field">
+          <span class="lab">何の費用ですか？</span>
+          <select id="pr-type"></select>
+        </label>
+        <label class="field">
+          <span class="lab">1年間に払った合計金額<span class="req">必須</span></span>
+          <div class="amount-input"><span class="yen">¥</span><input type="number" id="pr-total" inputmode="numeric" placeholder="0" min="0" oninput="updateProrate()"></div>
+        </label>
+        <label class="field">
+          <span class="lab">そのうち、仕事で使う割合は？　<span id="pr-pct-label" style="color:var(--primary);font-weight:800;">30</span>%</span>
+          <input type="range" id="pr-pct" min="0" max="100" step="5" value="30" oninput="updateProrate()" style="width:100%;">
+        </label>
+        <div class="sum-big">
+          <div class="l">経費にできる金額（目安）</div>
+          <div class="v" id="pr-result">¥0</div>
+        </div>
+        <button class="btn btn-primary" onclick="submitProrate()">この金額を経費に登録する</button>
+        <p class="hint" style="display:block;margin-top:10px;line-height:1.6;">💡 割合は「実際に仕事で使っている分」を正直に。迷ったら税務署や税理士に相談を。</p>
+      </div>
+    </section>
+
+    <!-- サマリー -->
+    <section class="view" id="view-summary">
+      <h2 class="page-title">📊 <span id="sum-year-title"></span>年のまとめ</h2>
+
+      <div class="warn-inline">
+        ⚠️ これは<b>おおよその目安</b>です。正式な申告額・控除の判定ではありません。
+      </div>
+
+      <div class="sum-big">
+        <div class="l">差引所得（おおよその目安）</div>
+        <div class="v" id="sum-net">¥0</div>
+      </div>
+
+      <div class="card">
+        <table class="sum-table">
+          <tr><td>総収入</td><td class="r" id="sum-income">¥0</td></tr>
+          <tr><td colspan="2" style="padding-top:14px;font-weight:700;color:var(--muted);font-size:13px;">経費の内訳（科目別）</td></tr>
+          <tbody id="sum-accounts"></tbody>
+          <tr class="total"><td>経費合計</td><td class="r" id="sum-expense">¥0</td></tr>
+          <tr class="net"><td>差引所得（目安）</td><td class="r" id="sum-net2">¥0</td></tr>
+          <tr><td>源泉徴収 合計<span class="hint">（前払いした税金）</span></td><td class="r" id="sum-withholding">¥0</td></tr>
+        </table>
+      </div>
+
+      <div class="notice">
+        この数字は、国税庁<b>「確定申告書等作成コーナー」</b>や <b>freee・マネーフォワード</b> などに<b>転記してお使いください</b>。
+        科目名はそのまま青色申告決算書の項目に対応しています。
+      </div>
+    </section>
+
+    <!-- 書き出し -->
+    <section class="view" id="view-export">
+      <h2 class="page-title">📤 書き出し・データ管理</h2>
+      <p class="lead">確定申告のために、記録をCSVファイルに書き出して保存できます。</p>
+
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:16px;">① 科目別の集計</h3>
+        <p class="hint" style="display:block;margin-bottom:12px;line-height:1.6;">青色申告決算書に転記しやすい「科目名・金額」の表です。</p>
+        <button class="btn btn-primary" onclick="exportSummaryCSV()">科目別集計CSVを書き出す</button>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:16px;">② 取引の明細（帳簿の保存用）</h3>
+        <p class="hint" style="display:block;margin-bottom:12px;line-height:1.6;">日付・区分・科目・金額・メモが1件ずつ並んだ一覧です。保存用にどうぞ。</p>
+        <button class="btn btn-ghost" onclick="exportDetailCSV()">取引明細CSVを書き出す</button>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 6px;font-size:16px;color:var(--danger);">⚠️ 全データの消去</h3>
+        <p class="hint" style="display:block;margin-bottom:12px;line-height:1.6;">すべての記録を削除します。元に戻せません。先にCSV書き出しを。</p>
+        <button class="btn btn-danger" onclick="clearAll()">すべての記録を消去する</button>
+      </div>
+
+      <div class="notice">
+        💾 データはこの端末のブラウザ内だけに保存されています。機種変更・ブラウザのデータ削除で消えるため、定期的なCSV書き出しをおすすめします。
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="home" onclick="showView('home')"><span class="ico">🏠</span><span class="lbl">ホーム</span></button>
+    <button class="nav-btn" data-view="income" onclick="showView('income')"><span class="ico">💰</span><span class="lbl">収入</span></button>
+    <button class="nav-btn" data-view="expense" onclick="showView('expense')"><span class="ico">🧾</span><span class="lbl">経費</span></button>
+    <button class="nav-btn" data-view="prorate" onclick="showView('prorate')"><span class="ico">🏠</span><span class="lbl">自宅ぶん</span></button>
+    <button class="nav-btn" data-view="summary" onclick="showView('summary')"><span class="ico">📊</span><span class="lbl">まとめ</span></button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   データ層
+============================================================ */
+const STORE_KEY = 'biyoushi_aoiro_v1';
+const INCOME_ACCOUNT = '売上';
+
+const EXPENSE_CATEGORIES = [
+  { id:'material',  emo:'🎨', label:'材料・薬剤',        account:'消耗品費',     help:'カラー剤・パーマ液・シャンプー・トリートメントなど、施術に使う材料。' },
+  { id:'tools',     emo:'✂️', label:'道具（シザー等）',  account:'消耗品費',     help:'シザー・コーム・クリップなど。1つ10万円未満の道具はここ。' },
+  { id:'equipment', emo:'🔌', label:'高価な機器・備品',  account:'工具器具備品', help:'1つ10万円以上するもの（ドライヤー機器など）。後で分けて計算が必要な場合があります。' },
+  { id:'seminar',   emo:'📚', label:'セミナー・講習',    account:'研修費',       help:'技術講習・セミナー・勉強会の参加費。' },
+  { id:'rent',      emo:'🪑', label:'席代・場所代',      account:'地代家賃',     help:'サロンに払う席のレンタル代・場所代。' },
+  { id:'uniform',   emo:'👕', label:'衣装・ユニフォーム',account:'消耗品費',     help:'仕事で着る服・エプロンなど。' },
+  { id:'transport', emo:'🚃', label:'交通費',            account:'旅費交通費',   help:'電車・バス・タクシー・駐車場代など、仕事の移動費。' },
+  { id:'other',     emo:'📦', label:'その他',            account:'雑費',         help:'上のどれにも当てはまらないもの。' },
+];
+
+const PRORATION_TYPES = [
+  { id:'rent',    label:'自宅の家賃',        account:'地代家賃' },
+  { id:'utility', label:'光熱費（電気・ガス・水道）',account:'水道光熱費' },
+  { id:'comm',    label:'スマホ・ネット代',  account:'通信費' },
+  { id:'other',   label:'その他',            account:'雑費' },
+];
+
+let state = { transactions:[] };
+let selectedYear = new Date().getFullYear();
+let selectedCat = null;     // 経費フォームで選択中のカテゴリid
+let editingId = null;       // 編集中の取引id（null=新規）
+let tesseractLoading = null; // OCRエンジンの読み込みPromiseキャッシュ
+
+function load(){
+  try{ const raw = localStorage.getItem(STORE_KEY); if(raw) state = JSON.parse(raw); }catch(e){ console.error(e); }
+  if(!state.transactions) state.transactions = [];
+}
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); return true; }
+  catch(e){
+    alert('保存できませんでした。端末の保存容量がいっぱいの可能性があります。\nCSVに書き出してから、不要な記録を整理してください。');
+    return false;
+  }
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+/* ============================================================
+   ユーティリティ
+============================================================ */
+function yen(n){ return '¥' + Math.round(n||0).toLocaleString('ja-JP'); }
+function todayStr(){
+  const d = new Date(); const p=x=>String(x).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function catById(id){ return EXPENSE_CATEGORIES.find(c=>c.id===id); }
+
+function txForYear(year){
+  return state.transactions.filter(t=>t.date && t.date.slice(0,4)===String(year));
+}
+function totals(year){
+  const tx = txForYear(year);
+  let income=0, expense=0, withholding=0;
+  const byAccount = {};
+  tx.forEach(t=>{
+    if(t.type==='income'){ income += t.amount; withholding += (t.withholding||0); }
+    else { expense += t.amount; byAccount[t.account] = (byAccount[t.account]||0) + t.amount; }
+  });
+  return { income, expense, withholding, net: income-expense, byAccount };
+}
+
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 1900);
+}
+
+/* ============================================================
+   画面切替
+============================================================ */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const view = document.getElementById('view-'+name);
+  if(view) view.classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view===name);
+  });
+  window.scrollTo(0,0);
+  render();
+}
+
+/* ============================================================
+   年セレクター
+============================================================ */
+function getYears(){
+  const set = new Set(state.transactions.map(t=>t.date && t.date.slice(0,4)).filter(Boolean));
+  set.add(String(new Date().getFullYear()));
+  set.add(String(selectedYear));
+  return [...set].sort((a,b)=>b-a);
+}
+function renderYearSelect(){
+  const sel = document.getElementById('yearSelect');
+  sel.innerHTML = getYears().map(y=>`<option value="${y}" ${y==selectedYear?'selected':''}>${y}年</option>`).join('');
+}
+
+/* ============================================================
+   収入
+============================================================ */
+function submitIncome(){
+  const amount = parseInt(document.getElementById('inc-amount').value,10);
+  if(!amount || amount<=0){ toast('金額を入れてください'); return; }
+  const date = document.getElementById('inc-date').value || todayStr();
+  const store = document.getElementById('inc-store').value.trim();
+  const withholding = parseInt(document.getElementById('inc-withholding').value,10) || 0;
+
+  if(editingId){
+    const t = state.transactions.find(x=>x.id===editingId);
+    if(t){ Object.assign(t,{amount,date,store,withholding}); }
+    editingId = null;
+    document.getElementById('inc-submit').textContent = 'この収入を記録する';
+  } else {
+    state.transactions.push({ id:uid(), type:'income', account:INCOME_ACCOUNT, amount, date, store, withholding, memo:'', photo:null, createdAt:Date.now() });
+  }
+  if(!save()) return;
+  resetIncomeForm();
+  toast('収入を記録しました');
+  render();
+}
+function resetIncomeForm(){
+  document.getElementById('inc-amount').value='';
+  document.getElementById('inc-store').value='';
+  document.getElementById('inc-withholding').value='';
+  document.getElementById('inc-date').value=todayStr();
+  editingId=null;
+  document.getElementById('inc-submit').textContent='この収入を記録する';
+}
+function editIncome(id){
+  const t = state.transactions.find(x=>x.id===id); if(!t) return;
+  showView('income');
+  document.getElementById('inc-amount').value=t.amount;
+  document.getElementById('inc-date').value=t.date;
+  document.getElementById('inc-store').value=t.store||'';
+  document.getElementById('inc-withholding').value=t.withholding||0;
+  editingId=id;
+  document.getElementById('inc-submit').textContent='この内容で更新する';
+  window.scrollTo(0,0);
+}
+
+/* ============================================================
+   経費
+============================================================ */
+function renderCatGrid(){
+  const grid = document.getElementById('cat-grid');
+  grid.innerHTML = EXPENSE_CATEGORIES.map(c=>`
+    <div class="cat-chip ${selectedCat===c.id?'sel':''}" onclick="selectCat('${c.id}')">
+      <div class="emo">${c.emo}</div><div class="nm">${c.label}</div>
+    </div>`).join('');
+  const help = document.getElementById('cat-help');
+  if(selectedCat){ const c=catById(selectedCat); help.textContent='💡 '+c.help; help.classList.add('show'); }
+  else { help.classList.remove('show'); }
+}
+function selectCat(id){ selectedCat=id; renderCatGrid(); }
+
+/* ---- レシート読み取り（端末内OCR：画像は保存しない） ---- */
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve(window.Tesseract);
+  if(tesseractLoading) return tesseractLoading;
+  tesseractLoading = new Promise((resolve,reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    s.onload = ()=> window.Tesseract ? resolve(window.Tesseract) : reject(new Error('読み取りエンジンを読み込めませんでした'));
+    s.onerror = ()=>{ tesseractLoading=null; reject(new Error('ネットに接続できないため、読み取り機能を準備できませんでした')); };
+    document.head.appendChild(s);
+  });
+  return tesseractLoading;
+}
+function clearOcrStatus(){
+  const el=document.getElementById('ocr-status'); el.classList.remove('show'); el.innerHTML='';
+}
+async function handleReceiptOCR(ev){
+  const file = ev.target.files[0]; ev.target.value='';
+  if(!file) return;
+  const statusEl = document.getElementById('ocr-status');
+  const btn = document.getElementById('ocr-btn');
+  const previewUrl = URL.createObjectURL(file);
+  statusEl.classList.add('show');
+  statusEl.innerHTML = `<span class="spinner"></span>読み取り中…（初回はエンジンの準備に少し時間がかかります）<div class="preview"><img src="${previewUrl}"></div>`;
+  btn.classList.add('busy');
+  try{
+    const T = await loadTesseract();
+    const dataUrl = await compressImage(file, 1500, 0.85); // OCR用に少し高めの解像度で前処理
+    const { data } = await T.recognize(dataUrl, 'jpn');
+    const text = data && data.text ? data.text : '';
+    const amount = extractAmount(text);
+    const date = extractDate(text);
+    let msg = '';
+    if(amount){
+      document.getElementById('exp-amount').value = amount;
+      msg += `<span class="ok">読み取った金額：¥${amount.toLocaleString('ja-JP')}</span>　← 必ずご確認ください`;
+    } else {
+      msg += '金額をうまく読み取れませんでした。お手数ですが手で入力してください。';
+    }
+    if(date){ document.getElementById('exp-date').value = date; msg += `<br>日付：${date}`; }
+    msg += '<br><span style="color:var(--muted);">※この画像は保存されません。記録には金額などの文字だけが残ります。</span>';
+    statusEl.innerHTML = msg;
+  }catch(e){
+    console.error(e);
+    statusEl.innerHTML = (e && e.message ? e.message : '読み取りできませんでした') + '<br>金額は手で入力してください。';
+  } finally {
+    btn.classList.remove('busy');
+    setTimeout(()=>URL.revokeObjectURL(previewUrl), 8000);
+  }
+}
+/* 全角→半角に変換（数字・英字・記号、全角スペース） */
+function toHalfWidth(s){
+  return String(s||'')
+    .replace(/[！-～]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0))
+    .replace(/　/g,' ').replace(/ +/g,' ');
+}
+/* 日付らしい行・部分を表す正規表現（西暦／令和） */
+const DATE_RE_WEST = /(20[0-9]{2})\s*[\/\-年.]\s*([01]?[0-9])\s*[\/\-月.]\s*([0-3]?[0-9])/;
+const DATE_RE_REIWA = /(?:令和|R)\s*([0-9]{1,2})\s*[.\-年]\s*([01]?[0-9])\s*[.\-月]\s*([0-3]?[0-9])/;
+function isDateLine(line){ return DATE_RE_WEST.test(line) || DATE_RE_REIWA.test(line); }
+function numsInLine(line){
+  // 円は整数。OCRがカンマを「.」に誤読することがあるため、桁区切りの「,」「.」はまとめて除去して整数化
+  const out=[]; let m; const re=/[0-9][0-9.,]*[0-9]|[0-9]/g;
+  while((m=re.exec(line))){ const n=parseInt(m[0].replace(/[.,]/g,''),10); if(!isNaN(n)) out.push(n); }
+  return out;
+}
+/* レシート本文から「合計金額」候補を推定（あくまで候補・要確認） */
+function extractAmount(text){
+  const lines = toHalfWidth(text).split(/\r?\n/);
+  const keyword = /(合\s*計|税\s*込|お?買\s*上|ご?請\s*求|総\s*額|現\s*計)/;
+  const exclude = /(小\s*計|預|釣|お返し|現金|ポイント|残高|点数|個数|税抜|内税|外税|電話|TEL|〒|登録番号|No)/;
+  // 1) 「合計/税込」などのキーワード行の金額を最優先（小計や預り/釣りは除外）
+  let cand=[];
+  lines.forEach(line=>{
+    if(keyword.test(line) && !/小\s*計/.test(line)){
+      numsInLine(line).forEach(n=>{ if(n>=10 && n<=9999999) cand.push(n); });
+    }
+  });
+  if(cand.length) return Math.max(...cand);
+  // 2) 見つからなければ、除外語・日付の行をのぞいた中で最大の金額を採用
+  let all=[];
+  lines.forEach(line=>{ if(exclude.test(line) || isDateLine(line)) return; numsInLine(line).forEach(n=>{ if(n>=50 && n<=9999999) all.push(n); }); });
+  return all.length ? Math.max(...all) : null;
+}
+/* レシート本文から日付を推定（西暦・令和に対応） */
+function extractDate(text){
+  const t = toHalfWidth(text);
+  const yNow = new Date().getFullYear();
+  function ok(y,mo,d){ return y>=2015 && y<=yNow+1 && mo>=1 && mo<=12 && d>=1 && d<=31; }
+  function fmt(y,mo,d){ return `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+  let m = t.match(DATE_RE_WEST);
+  if(m){ const y=+m[1],mo=+m[2],d=+m[3]; if(ok(y,mo,d)) return fmt(y,mo,d); }
+  m = t.match(DATE_RE_REIWA);
+  if(m){ const y=2018+(+m[1]),mo=+m[2],d=+m[3]; if(ok(y,mo,d)) return fmt(y,mo,d); }
+  return null;
+}
+function compressImage(file, maxDim=900, quality=0.55){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = e=>{
+      const img = new Image();
+      img.onload = ()=>{
+        let w=img.width, h=img.height;
+        if(w>h){ if(w>maxDim){ h=Math.round(h*maxDim/w); w=maxDim; } }
+        else   { if(h>maxDim){ w=Math.round(w*maxDim/h); h=maxDim; } }
+        const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(cv.toDataURL('image/jpeg', quality));
+      };
+      img.onerror=reject; img.src=e.target.result;
+    };
+    reader.onerror=reject; reader.readAsDataURL(file);
+  });
+}
+function submitExpense(){
+  if(!selectedCat){ toast('種類を選んでください'); return; }
+  const amount = parseInt(document.getElementById('exp-amount').value,10);
+  if(!amount || amount<=0){ toast('金額を入れてください'); return; }
+  const date = document.getElementById('exp-date').value || todayStr();
+  const memo = document.getElementById('exp-memo').value.trim();
+  const cat = catById(selectedCat);
+
+  if(editingId){
+    const t = state.transactions.find(x=>x.id===editingId);
+    if(t){ Object.assign(t,{amount,date,memo,category:cat.id,account:cat.account}); }
+    editingId=null;
+  } else {
+    // photo は将来の拡張用に枠だけ残す（画像は保存しない）
+    state.transactions.push({ id:uid(), type:'expense', category:cat.id, account:cat.account, amount, date, store:'', withholding:0, memo, photo:null, createdAt:Date.now() });
+  }
+  if(!save()) return;
+  resetExpenseForm();
+  toast('経費を記録しました');
+  render();
+}
+function resetExpenseForm(){
+  selectedCat=null; editingId=null;
+  document.getElementById('exp-amount').value='';
+  document.getElementById('exp-memo').value='';
+  document.getElementById('exp-date').value=todayStr();
+  clearOcrStatus();
+  document.getElementById('exp-submit').textContent='この経費を記録する';
+  renderCatGrid();
+}
+function editExpense(id){
+  const t = state.transactions.find(x=>x.id===id); if(!t) return;
+  showView('expense');
+  selectedCat = t.category;
+  document.getElementById('exp-amount').value=t.amount;
+  document.getElementById('exp-date').value=t.date;
+  document.getElementById('exp-memo').value=t.memo||'';
+  clearOcrStatus();
+  editingId=id;
+  document.getElementById('exp-submit').textContent='この内容で更新する';
+  renderCatGrid();
+  window.scrollTo(0,0);
+}
+
+/* ============================================================
+   削除（共通）
+============================================================ */
+function deleteTx(id){
+  const t = state.transactions.find(x=>x.id===id); if(!t) return;
+  const label = t.type==='income' ? '収入' : '経費';
+  if(!confirm(`この${label}（${yen(t.amount)}）を削除しますか？\nこの操作は元に戻せません。`)) return;
+  state.transactions = state.transactions.filter(x=>x.id!==id);
+  save(); render(); toast('削除しました');
+}
+
+/* ============================================================
+   家事按分
+============================================================ */
+function renderProrateTypes(){
+  const sel=document.getElementById('pr-type');
+  sel.innerHTML = PRORATION_TYPES.map(p=>`<option value="${p.id}">${p.label}</option>`).join('');
+}
+function updateProrate(){
+  const total = parseInt(document.getElementById('pr-total').value,10)||0;
+  const pct = parseInt(document.getElementById('pr-pct').value,10)||0;
+  document.getElementById('pr-pct-label').textContent = pct;
+  document.getElementById('pr-result').textContent = yen(Math.round(total*pct/100));
+}
+function submitProrate(){
+  const total = parseInt(document.getElementById('pr-total').value,10)||0;
+  const pct = parseInt(document.getElementById('pr-pct').value,10)||0;
+  if(total<=0){ toast('合計金額を入れてください'); return; }
+  const amount = Math.round(total*pct/100);
+  if(amount<=0){ toast('経費にできる金額が0円です'); return; }
+  const typeId = document.getElementById('pr-type').value;
+  const pt = PRORATION_TYPES.find(p=>p.id===typeId);
+  state.transactions.push({
+    id:uid(), type:'expense', category:'prorate', account:pt.account,
+    amount, date:todayStr(), store:'', withholding:0,
+    memo:`${pt.label}（仕事ぶん ${pct}％／合計${yen(total)}）`, photo:null, createdAt:Date.now()
+  });
+  if(!save()) return;
+  document.getElementById('pr-total').value='';
+  updateProrate();
+  toast('経費に登録しました');
+  render();
+}
+
+/* ============================================================
+   描画
+============================================================ */
+function render(){
+  selectedYear = parseInt(document.getElementById('yearSelect').value,10) || selectedYear;
+  renderYearSelect();
+  const t = totals(selectedYear);
+
+  // ホーム
+  document.getElementById('home-net').textContent = yen(t.net);
+  document.getElementById('home-income').textContent = yen(t.income);
+  document.getElementById('home-expense').textContent = yen(t.expense);
+
+  renderCatGrid();
+  renderIncomeList();
+  renderExpenseList();
+  renderSummary(t);
+}
+
+function txItemHTML(t){
+  const isInc = t.type==='income';
+  let thumb, top, bot;
+  if(isInc){
+    thumb = '<div class="thumb">💰</div>';
+    top = t.store ? t.store : '収入';
+    bot = `${t.date}` + (t.withholding ? `・源泉 ${yen(t.withholding)}` : '');
+  } else {
+    const c = catById(t.category) || {emo:(t.category==='prorate'?'🏠':'📦'),label:t.account};
+    thumb = `<div class="thumb">${c.emo}</div>`;
+    top = c.label;
+    bot = `${t.date}` + (t.memo ? `・${escapeHtml(t.memo)}` : '');
+  }
+  const editFn = isInc ? `editIncome('${t.id}')` : `editExpense('${t.id}')`;
+  return `<div class="tx-item">
+    ${thumb}
+    <div class="info"><div class="top">${escapeHtml(top)}</div><div class="bot">${bot}</div></div>
+    <div class="amt ${isInc?'income':'expense'}">${yen(t.amount)}</div>
+    <div class="tx-actions">
+      <button onclick="${editFn}" title="編集">✏️</button>
+      <button onclick="deleteTx('${t.id}')" title="削除">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function renderIncomeList(){
+  const tx = txForYear(selectedYear).filter(t=>t.type==='income').sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
+  const sum = tx.reduce((s,t)=>s+t.amount,0);
+  document.getElementById('inc-yeartot').textContent = `${selectedYear}年 合計 ${yen(sum)}`;
+  const list = document.getElementById('inc-list');
+  list.innerHTML = tx.length ? groupByMonth(tx) : '<div class="empty">まだ収入の記録がありません。<br>上の「金額」を入れて記録してみましょう。</div>';
+}
+function renderExpenseList(){
+  const tx = txForYear(selectedYear).filter(t=>t.type==='expense').sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
+  const sum = tx.reduce((s,t)=>s+t.amount,0);
+  document.getElementById('exp-yeartot').textContent = `${selectedYear}年 合計 ${yen(sum)}`;
+  const list = document.getElementById('exp-list');
+  list.innerHTML = tx.length ? groupByMonth(tx) : '<div class="empty">まだ経費の記録がありません。<br>レシートを撮って記録してみましょう。</div>';
+}
+function groupByMonth(tx){
+  const groups = {};
+  tx.forEach(t=>{ const m=t.date.slice(0,7); (groups[m]=groups[m]||[]).push(t); });
+  return Object.keys(groups).sort((a,b)=>b.localeCompare(a)).map(m=>{
+    const items = groups[m];
+    const mtot = items.reduce((s,t)=>s+t.amount,0);
+    const mLabel = m.slice(0,4)+'年'+parseInt(m.slice(5,7),10)+'月';
+    return `<div class="list-head"><h3 style="font-size:14px;color:var(--muted);">${mLabel}</h3><span class="month-tot">${yen(mtot)}</span></div>` + items.map(txItemHTML).join('');
+  }).join('');
+}
+
+function renderSummary(t){
+  document.getElementById('sum-year-title').textContent = selectedYear;
+  document.getElementById('sum-net').textContent = yen(t.net);
+  document.getElementById('sum-income').textContent = yen(t.income);
+  document.getElementById('sum-expense').textContent = yen(t.expense);
+  document.getElementById('sum-net2').textContent = yen(t.net);
+  document.getElementById('sum-withholding').textContent = yen(t.withholding);
+  const rows = Object.keys(t.byAccount).sort((a,b)=>t.byAccount[b]-t.byAccount[a])
+    .map(acc=>`<tr><td>${escapeHtml(acc)}</td><td class="r">${yen(t.byAccount[acc])}</td></tr>`).join('');
+  document.getElementById('sum-accounts').innerHTML = rows || '<tr><td colspan="2" style="color:var(--muted);font-size:13px;">まだ経費の記録がありません</td></tr>';
+}
+
+/* ============================================================
+   CSV書き出し
+============================================================ */
+function csvField(v){
+  v = String(v==null?'':v);
+  if(/[",\n]/.test(v)) return '"'+v.replace(/"/g,'""')+'"';
+  return v;
+}
+function downloadCSV(filename, rows){
+  const text = '﻿' + rows.map(r=>r.map(csvField).join(',')).join('\r\n');
+  const blob = new Blob([text], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportSummaryCSV(){
+  const t = totals(selectedYear);
+  const rows = [['区分','科目名','金額']];
+  rows.push(['収入','売上', t.income]);
+  Object.keys(t.byAccount).sort((a,b)=>t.byAccount[b]-t.byAccount[a]).forEach(acc=>{
+    rows.push(['経費', acc, t.byAccount[acc]]);
+  });
+  rows.push(['経費','経費合計', t.expense]);
+  rows.push(['','','']);
+  rows.push(['','差引所得（目安）', t.net]);
+  rows.push(['','源泉徴収 合計', t.withholding]);
+  downloadCSV(`科目別集計_${selectedYear}.csv`, rows);
+  toast('科目別集計を書き出しました');
+}
+function exportDetailCSV(){
+  const tx = txForYear(selectedYear).slice().sort((a,b)=>a.date.localeCompare(b.date)||a.createdAt-b.createdAt);
+  const rows = [['日付','区分','科目','金額','源泉徴収','メモ']];
+  tx.forEach(t=>{
+    const kubun = t.type==='income' ? '収入' : '経費';
+    let memo = t.memo||'';
+    if(t.type==='income' && t.store) memo = ('店名:'+t.store) + (memo?'／'+memo:'');
+    rows.push([t.date, kubun, t.account, t.amount, t.withholding||0, memo]);
+  });
+  downloadCSV(`取引明細_${selectedYear}.csv`, rows);
+  toast('取引明細を書き出しました');
+}
+function clearAll(){
+  if(!confirm('本当にすべての記録を消去しますか？\n\nこの操作は元に戻せません。\n先にCSVへの書き出しをおすすめします。')) return;
+  if(!confirm('最終確認：すべての収入・経費・写真が消えます。よろしいですか？')) return;
+  state = { transactions:[] };
+  save(); render(); toast('すべて消去しました');
+  showView('home');
+}
+
+/* ============================================================
+   ユーティリティ
+============================================================ */
+function escapeHtml(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ============================================================
+   初期化
+============================================================ */
+function init(){
+  load();
+  document.getElementById('inc-date').value = todayStr();
+  document.getElementById('exp-date').value = todayStr();
+  renderProrateTypes();
+  renderYearSelect();
+  document.getElementById('yearSelect').addEventListener('change', e=>{
+    selectedYear = parseInt(e.target.value,10); render();
+  });
+  updateProrate();
+  render();
+}
+init();
+</script>
+</body>
+</html>
