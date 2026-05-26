@@ -282,7 +282,7 @@
               <li>青色申告には、事前の<b>「青色申告承認申請書」の提出</b>が必要です（未提出だと白色申告になります）。</li>
               <li>データは<b>あなたの端末の中だけ</b>に保存され、外部には一切送信されません。</li>
               <li>レシートの読み取り（OCR）も<b>端末の中だけ</b>で行い、撮った画像は保存も送信もしません。読み取った金額は<b>目安なので必ず確認</b>を。（初回だけ読み取り機能の準備にネット接続が必要です）</li>
-              <li>端末の変更やブラウザのデータ削除で記録は消えます。<b>こまめにCSV書き出し</b>をおすすめします。</li>
+              <li>端末の変更やブラウザの履歴・データ削除で記録は消えます。<b>「書き出し」画面から月1回バックアップを保存</b>し、クラウドやメールに控えておきましょう（消えても復元できます）。</li>
             </ul>
           </div>
         </div>
@@ -423,12 +423,25 @@
     <!-- 書き出し -->
     <section class="view" id="view-export">
       <h2 class="page-title">📤 書き出し・データ管理</h2>
-      <p class="lead">確定申告のために、記録をCSVファイルに書き出して保存できます。</p>
+      <p class="lead">記録のバックアップや、確定申告用のCSV書き出しができます。</p>
+
+      <div class="card" style="border:2px solid var(--primary);">
+        <h3 style="margin:0 0 8px;font-size:16px;">💾 バックアップ（いちばん大切）</h3>
+        <div class="warn-inline" style="margin-bottom:12px;">
+          記録はこの端末の中だけに保存され、<b>履歴・サイトデータの削除や、機種変更・故障で消えます</b>。万一に備えて<b>月1回はバックアップを保存</b>し、クラウド（iCloud / Google Drive）やメール・LINEに置いておきましょう。
+        </div>
+        <button class="btn btn-primary" onclick="saveBackup()">バックアップを保存する</button>
+        <label class="btn btn-ghost" style="margin-top:10px;cursor:pointer;">
+          バックアップから復元する
+          <input type="file" id="restore-file" accept=".json,application/json" style="display:none;" onchange="restoreBackup(event)">
+        </label>
+        <p class="hint" style="display:block;margin-top:10px;line-height:1.6;"><b>保存</b>：全データを小さな1ファイル（.json）に書き出します。<br><b>復元</b>：そのファイルを選ぶと記録がまるごと戻ります（いま端末にある記録に重ねて復元し、重複は自動でまとめます）。</p>
+      </div>
 
       <div class="card">
-        <h3 style="margin:0 0 6px;font-size:16px;">① 科目別の集計</h3>
+        <h3 style="margin:0 0 6px;font-size:16px;">① 科目別の集計（申告用）</h3>
         <p class="hint" style="display:block;margin-bottom:12px;line-height:1.6;">青色申告決算書に転記しやすい「科目名・金額」の表です。</p>
-        <button class="btn btn-primary" onclick="exportSummaryCSV()">科目別集計CSVを書き出す</button>
+        <button class="btn btn-ghost" onclick="exportSummaryCSV()">科目別集計CSVを書き出す</button>
       </div>
 
       <div class="card">
@@ -437,14 +450,30 @@
         <button class="btn btn-ghost" onclick="exportDetailCSV()">取引明細CSVを書き出す</button>
       </div>
 
+      <details class="help-box">
+        <summary>データを失わないための2つの対策</summary>
+        <div class="body">
+          <div class="notice">
+            記録はインターネット上ではなく<b>あなたの端末の中だけ</b>に保存されています。だからこそ、次の<b>2段構え</b>で守るのが安心です。<br><br>
+            <b>① 消えにくくする（予防）</b>
+            <ul>
+              <li><b>ホーム画面に追加</b>して、そこから開く（特にiPhoneで効果大）</li>
+              <li>いつも<b>同じスマホ・同じブラウザ</b>を使う</li>
+              <li>ブラウザの「<b>履歴・Cookie・サイトデータの削除</b>」をしない</li>
+            </ul>
+            <b>② 消えても戻せるようにする（バックアップ）</b>
+            <ul>
+              <li><b>月1回はバックアップを保存</b>し、クラウドやメールに置いておく</li>
+              <li>機種変更・データ削除のあとは「<b>復元</b>」でまるごと元通り</li>
+            </ul>
+          </div>
+        </div>
+      </details>
+
       <div class="card">
         <h3 style="margin:0 0 6px;font-size:16px;color:var(--danger);">⚠️ 全データの消去</h3>
-        <p class="hint" style="display:block;margin-bottom:12px;line-height:1.6;">すべての記録を削除します。元に戻せません。先にCSV書き出しを。</p>
+        <p class="hint" style="display:block;margin-bottom:12px;line-height:1.6;">すべての記録を削除します。元に戻せません。先にバックアップ保存を。</p>
         <button class="btn btn-danger" onclick="clearAll()">すべての記録を消去する</button>
-      </div>
-
-      <div class="notice">
-        💾 データはこの端末のブラウザ内だけに保存されています。機種変更・ブラウザのデータ削除で消えるため、定期的なCSV書き出しをおすすめします。
       </div>
     </section>
   </main>
@@ -945,9 +974,51 @@ function exportDetailCSV(){
   downloadCSV(`取引明細_${selectedYear}.csv`, rows);
   toast('取引明細を書き出しました');
 }
+/* ---- バックアップ（保存／復元）：全データをJSON1ファイルで ---- */
+function saveBackup(){
+  if(!state.transactions.length){ toast('記録がまだありません'); return; }
+  const payload = { app:'kantan-aoiro', version:1, exportedAt:new Date().toISOString(), transactions:state.transactions };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`バックアップ_aoiro_${todayStr()}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast('バックアップを保存しました');
+}
+function restoreBackup(ev){
+  const file = ev.target.files[0]; ev.target.value='';
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    let data;
+    try{ data = JSON.parse(e.target.result); }
+    catch(err){ alert('このファイルは読み込めませんでした。\nバックアップ（.json）ファイルを選んでください。'); return; }
+    const incoming = Array.isArray(data) ? data : (data && Array.isArray(data.transactions) ? data.transactions : null);
+    if(!incoming){ alert('バックアップの形式が正しくありません。'); return; }
+    const valid = incoming.filter(t=> t && (t.type==='income'||t.type==='expense') && typeof t.amount==='number' && t.date);
+    if(!valid.length){ alert('復元できる記録が見つかりませんでした。'); return; }
+    // 既存とidでマージ（重複は追加しない＝今ある記録は消さない）
+    const existingIds = new Set(state.transactions.map(t=>t.id));
+    let added=0;
+    valid.forEach(t=>{
+      if(!t.id) t.id = uid();
+      if(!existingIds.has(t.id)){
+        state.transactions.push(Object.assign({ type:'expense', amount:0, date:todayStr(), account:'', category:'', store:'', withholding:0, memo:'', photo:null, createdAt:Date.now() }, t));
+        existingIds.add(t.id); added++;
+      }
+    });
+    if(!save()) return;
+    const skipped = valid.length - added;
+    alert(`復元しました。\n${added}件を追加（記録は合計 ${state.transactions.length}件）。` + (skipped>0 ? `\n（${skipped}件は既にあったためスキップ）` : ''));
+    showView('home');
+  };
+  reader.onerror = ()=> alert('ファイルの読み込みに失敗しました。');
+  reader.readAsText(file);
+}
 function clearAll(){
-  if(!confirm('本当にすべての記録を消去しますか？\n\nこの操作は元に戻せません。\n先にCSVへの書き出しをおすすめします。')) return;
-  if(!confirm('最終確認：すべての収入・経費・写真が消えます。よろしいですか？')) return;
+  if(!confirm('本当にすべての記録を消去しますか？\n\nこの操作は元に戻せません。\n先に「バックアップを保存」をおすすめします。')) return;
+  if(!confirm('最終確認：すべての収入・経費の記録が消えます。よろしいですか？')) return;
   state = { transactions:[] };
   save(); render(); toast('すべて消去しました');
   showView('home');
